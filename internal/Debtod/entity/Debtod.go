@@ -2,8 +2,6 @@ package entity
 
 import (
 	"errors"
-
-	"github.com/google/uuid"
 )
 
 type EPersonType uint8
@@ -22,10 +20,10 @@ type Debtod struct {
 	CPF_CNPJ      string
 	PersonType    EPersonType
 	Contacts      Contact
+	Addresses     []Address
 }
 
 func NewDebtod(debtod *Debtod) (newDebtod *Debtod, err error) {
-	debtod.Id = uuid.NewString()
 	err = debtod.Validate()
 	if err != nil {
 		return
@@ -38,6 +36,7 @@ func NewDebtod(debtod *Debtod) (newDebtod *Debtod, err error) {
 		CPF_CNPJ:      debtod.CPF_CNPJ,
 		PersonType:    debtod.PersonType,
 		Contacts:      debtod.Contacts,
+		Addresses:     debtod.Addresses,
 	}
 
 	return newDebtod, err
@@ -65,5 +64,23 @@ func (d *Debtod) Validate() (err error) {
 		return
 	}
 
+	err = ValidateAddressIfExists(d)
+	if err != nil {
+		return
+	}
+
 	return nil
+}
+
+func ValidateAddressIfExists(d *Debtod) (err error) {
+	addressesLenght := len(d.Addresses)
+	if addressesLenght > 0 {
+		for i := 0; i < addressesLenght; i++ {
+			err = d.Addresses[i].Validate()
+			if err != nil {
+				return
+			}
+		}
+	}
+	return
 }

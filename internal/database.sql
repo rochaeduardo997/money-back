@@ -27,9 +27,9 @@ CREATE TABLE tbl_debtods_contact_emails(
 );
 
 CREATE TABLE tbl_debtods_addresses(
-  zipcode INTEGER NOT NULL,
   street VARCHAR(255) NOT NULL,
   number INTEGER NOT NULL,
+  zipcode INTEGER NOT NULL,
   neighborhood VARCHAR(50),
   observation TEXT,
   description TEXT,
@@ -39,7 +39,7 @@ CREATE TABLE tbl_debtods_addresses(
   PRIMARY KEY(fk_debtod_id, street, number)
 );
 
-CREATE TABLE tbl_debtods_expired_invoices(
+CREATE TABLE tbl_debtods_overdued_invoices(
   id                     UUID UNIQUE NOT NULL,
   invoice_identification TEXT,
   invoice_status         BOOLEAN NOT NULL,

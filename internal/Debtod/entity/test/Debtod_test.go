@@ -8,8 +8,27 @@ import (
 )
 
 func Test_GivenDebtod_WhenCreateNewDebtod_ThenReceiveNormalDebtodInstance(t *testing.T) {
-	contacts := NewContact()
+	contacts := MockContact()
+	address := MockAddress()
 	debtod := &entity.Debtod{
+		Id:            "uuid",
+		Name:          "name",
+		Surname:       "surname",
+		BussinessName: "bussiness_name",
+		CPF_CNPJ:      "cpf_cnpj",
+		PersonType:    1,
+		Contacts:      *contacts,
+		Addresses:     []entity.Address{*address},
+	}
+	got, err := entity.NewDebtod(debtod)
+	assert.Nil(t, err)
+	assert.EqualValues(t, got, debtod)
+}
+
+func Test_GivenDebtodWithoutAddress_WhenCreateNewDebtod_ThenReceiveNormalDebtodInstance(t *testing.T) {
+	contacts := MockContact()
+	debtod := &entity.Debtod{
+		Id:            "uuid",
 		Name:          "name",
 		Surname:       "surname",
 		BussinessName: "bussiness_name",
@@ -65,4 +84,20 @@ func Test_GivenEmptyContacts_WhenCreateNewDebtod_ThenReceiveError(t *testing.T) 
 		PersonType: 1,
 	}
 	assert.EqualError(t, got.Validate(), "at least one number must be provided")
+}
+
+func Test_GivenEmptyAddressStreet_WhenCreateNewDebtod_ThenReceiveError(t *testing.T) {
+	contacts := MockContact()
+	address := MockAddress()
+	address.Street = ""
+	got := entity.Debtod{
+		Id:         "uuid",
+		Name:       "name",
+		Surname:    "surname",
+		CPF_CNPJ:   "cpf_cnpj",
+		PersonType: 1,
+		Contacts:   *contacts,
+		Addresses:  []entity.Address{*address},
+	}
+	assert.EqualError(t, got.Validate(), "street must be provided")
 }

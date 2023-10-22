@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func NewContact() (contact *entity.Contact) {
+func MockContact() (contact *entity.Contact) {
 	contact = &entity.Contact{
 		Numbers: []int{54321432143, 12345123412},
 		Emails:  []string{"email1", "email2"},
