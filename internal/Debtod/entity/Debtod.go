@@ -21,6 +21,7 @@ type Debtod struct {
 	PersonType    EPersonType
 	Contacts      Contact
 	Addresses     []Address
+	Invoices      []Invoice
 }
 
 func NewDebtod(debtod *Debtod) (newDebtod *Debtod, err error) {
@@ -37,6 +38,7 @@ func NewDebtod(debtod *Debtod) (newDebtod *Debtod, err error) {
 		PersonType:    debtod.PersonType,
 		Contacts:      debtod.Contacts,
 		Addresses:     debtod.Addresses,
+		Invoices:      debtod.Invoices,
 	}
 
 	return newDebtod, err
@@ -69,6 +71,11 @@ func (d *Debtod) Validate() (err error) {
 		return
 	}
 
+	err = ValidateInvoices(d)
+	if err != nil {
+		return
+	}
+
 	return nil
 }
 
@@ -77,6 +84,22 @@ func ValidateAddressIfExists(d *Debtod) (err error) {
 	if addressesLenght > 0 {
 		for i := 0; i < addressesLenght; i++ {
 			err = d.Addresses[i].Validate()
+			if err != nil {
+				return
+			}
+		}
+	}
+	return
+}
+
+func ValidateInvoices(d *Debtod) (err error) {
+	invoicesLenght := len(d.Invoices)
+	if invoicesLenght == 0 {
+		return errors.New("at least one invoice must be provided")
+	}
+	if invoicesLenght > 0 {
+		for i := 0; i < invoicesLenght; i++ {
+			err = d.Invoices[i].Validate()
 			if err != nil {
 				return
 			}

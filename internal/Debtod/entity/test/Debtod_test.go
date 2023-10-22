@@ -10,6 +10,7 @@ import (
 func Test_GivenDebtod_WhenCreateNewDebtod_ThenReceiveNormalDebtodInstance(t *testing.T) {
 	contacts := MockContact()
 	address := MockAddress()
+	invoice := MockInvoice()
 	debtod := &entity.Debtod{
 		Id:            "uuid",
 		Name:          "name",
@@ -19,6 +20,7 @@ func Test_GivenDebtod_WhenCreateNewDebtod_ThenReceiveNormalDebtodInstance(t *tes
 		PersonType:    1,
 		Contacts:      *contacts,
 		Addresses:     []entity.Address{*address},
+		Invoices:      []entity.Invoice{*invoice},
 	}
 	got, err := entity.NewDebtod(debtod)
 	assert.Nil(t, err)
@@ -27,6 +29,7 @@ func Test_GivenDebtod_WhenCreateNewDebtod_ThenReceiveNormalDebtodInstance(t *tes
 
 func Test_GivenDebtodWithoutAddress_WhenCreateNewDebtod_ThenReceiveNormalDebtodInstance(t *testing.T) {
 	contacts := MockContact()
+	invoice := MockInvoice()
 	debtod := &entity.Debtod{
 		Id:            "uuid",
 		Name:          "name",
@@ -35,6 +38,7 @@ func Test_GivenDebtodWithoutAddress_WhenCreateNewDebtod_ThenReceiveNormalDebtodI
 		CPF_CNPJ:      "cpf_cnpj",
 		PersonType:    1,
 		Contacts:      *contacts,
+		Invoices:      []entity.Invoice{*invoice},
 	}
 	got, err := entity.NewDebtod(debtod)
 	assert.Nil(t, err)
@@ -100,4 +104,37 @@ func Test_GivenEmptyAddressStreet_WhenCreateNewDebtod_ThenReceiveError(t *testin
 		Addresses:  []entity.Address{*address},
 	}
 	assert.EqualError(t, got.Validate(), "street must be provided")
+}
+
+func Test_GivenEmptyInvoices_WhenCreateNewDebtod_ThenReceiveError(t *testing.T) {
+	contacts := MockContact()
+	address := MockAddress()
+	got := entity.Debtod{
+		Id:         "uuid",
+		Name:       "name",
+		Surname:    "surname",
+		CPF_CNPJ:   "cpf_cnpj",
+		PersonType: 1,
+		Contacts:   *contacts,
+		Addresses:  []entity.Address{*address},
+	}
+	assert.EqualError(t, got.Validate(), "at least one invoice must be provided")
+}
+
+func Test_GivenEmptyInvoicesId_WhenCreateNewDebtod_ThenReceiveError(t *testing.T) {
+	contacts := MockContact()
+	address := MockAddress()
+	invoice := MockInvoice()
+	invoice.Id = ""
+	got := entity.Debtod{
+		Id:         "uuid",
+		Name:       "name",
+		Surname:    "surname",
+		CPF_CNPJ:   "cpf_cnpj",
+		PersonType: 1,
+		Contacts:   *contacts,
+		Addresses:  []entity.Address{*address},
+		Invoices:   []entity.Invoice{*invoice},
+	}
+	assert.EqualError(t, got.Validate(), "invoice id must be provided")
 }

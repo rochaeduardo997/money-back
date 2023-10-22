@@ -39,7 +39,7 @@ CREATE TABLE tbl_debtods_addresses(
   PRIMARY KEY(fk_debtod_id, street, number)
 );
 
-CREATE TABLE tbl_debtods_overdued_invoices(
+CREATE TABLE tbl_debtods_invoices(
   id                     UUID UNIQUE NOT NULL,
   invoice_identification TEXT,
   invoice_status         BOOLEAN NOT NULL,
