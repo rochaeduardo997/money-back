@@ -1,0 +1,45 @@
+services:
+  db:
+    #image: postgres:latest
+    image: postgres:latest
+    container_name: db
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    mem_limit: 1024m
+    cpus: 1
+    expose:
+      - 5432
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "psql_user", "-d", "db_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  app:
+    image: golang:latest
+    container_name: app
+    mem_limit: 1024m
+    cpus: 1
+    expose:
+      - 3000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - type: bind
+        source: ../../
+        target: /app
+    command: bash -c "cd /app/ && go mod tidy && go test --cover -v ./..."
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge      
+
+volumes:
+  db-data:

@@ -1,5 +1,11 @@
+DROP DATABASE IF EXISTS db_test;
+CREATE DATABASE db_test;
+
+\c db_test;
+
 CREATE TYPE person_type AS ENUM('pf', 'pj', 'foreigner');
-CREATE TABLE tbl_debtods(
+
+CREATE TABLE IF NOT EXISTS tbl_debtods(
   id             UUID UNIQUE NOT NULL,
   name           VARCHAR(255) NOT NULL,
   surname        VARCHAR(255) NOT NULL,
@@ -10,7 +16,7 @@ CREATE TABLE tbl_debtods(
   PRIMARY KEY(id)
 );
 
-CREATE TABLE tbl_debtods_contact_numbers(
+CREATE TABLE IF NOT EXISTS tbl_debtods_contact_numbers(
   number VARCHAR(14) NOT NULL,
   fk_debtod_id UUID NOT NULL,
   FOREIGN KEY (fk_debtod_id)
@@ -18,7 +24,7 @@ CREATE TABLE tbl_debtods_contact_numbers(
   PRIMARY KEY (number, fk_debtod_id)
 );
 
-CREATE TABLE tbl_debtods_contact_emails(
+CREATE TABLE IF NOT EXISTS tbl_debtods_contact_emails(
   email VARCHAR(255) NOT NULL,
   fk_debtod_id UUID NOT NULL,
   FOREIGN KEY (fk_debtod_id)
@@ -26,7 +32,7 @@ CREATE TABLE tbl_debtods_contact_emails(
   PRIMARY KEY (email, fk_debtod_id)
 );
 
-CREATE TABLE tbl_debtods_addresses(
+CREATE TABLE IF NOT EXISTS tbl_debtods_addresses(
   street VARCHAR(255) NOT NULL,
   number INTEGER NOT NULL,
   zipcode INTEGER NOT NULL,
@@ -39,7 +45,7 @@ CREATE TABLE tbl_debtods_addresses(
   PRIMARY KEY(fk_debtod_id, street, number)
 );
 
-CREATE TABLE tbl_debtods_invoices(
+CREATE TABLE IF NOT EXISTS tbl_debtods_invoices(
   id                     UUID UNIQUE NOT NULL,
   invoice_identification TEXT,
   invoice_status         BOOLEAN NOT NULL,
