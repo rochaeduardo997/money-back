@@ -4,6 +4,11 @@ import (
 	"errors"
 )
 
+type IDebtodRepository interface {
+	Save(d *Debtod) (debtod *Debtod, err error)
+	GetBy(id string) (debtod *Debtod, err error)
+}
+
 type EPersonType uint8
 
 const (
@@ -17,6 +22,7 @@ type Debtod struct {
 	Name          string
 	Surname       string
 	BussinessName string
+	Observation   string
 	CPF_CNPJ      string
 	PersonType    EPersonType
 	Contacts      Contact
@@ -34,6 +40,7 @@ func NewDebtod(debtod *Debtod) (newDebtod *Debtod, err error) {
 		Name:          debtod.Name,
 		Surname:       debtod.Surname,
 		BussinessName: debtod.BussinessName,
+		Observation:   debtod.Observation,
 		CPF_CNPJ:      debtod.CPF_CNPJ,
 		PersonType:    debtod.PersonType,
 		Contacts:      debtod.Contacts,

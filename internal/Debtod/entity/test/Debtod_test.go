@@ -1,4 +1,4 @@
-package entity_test
+package test
 
 import (
 	"testing"
@@ -16,6 +16,7 @@ func Test_GivenDebtod_WhenCreateNewDebtod_ThenReceiveNormalDebtodInstance(t *tes
 		Name:          "name",
 		Surname:       "surname",
 		BussinessName: "bussiness_name",
+		Observation:   "observation",
 		CPF_CNPJ:      "cpf_cnpj",
 		PersonType:    1,
 		Contacts:      *contacts,
