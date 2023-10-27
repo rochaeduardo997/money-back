@@ -50,10 +50,10 @@ CREATE TABLE IF NOT EXISTS tbl_debtods_invoices(
   invoice_identification TEXT,
   invoice_status         BOOLEAN NOT NULL,
   delay_notified         BOOLEAN,
-  dont_notify_until      DATE,
+  dont_notify_until      TIMESTAMP,
   observation            TEXT,
   description            TEXT,
-  expired_date           DATE,
+  expired_date           TIMESTAMP,
   fk_debtod_id           UUID NOT NULL,
   FOREIGN KEY (fk_debtod_id)
   REFERENCES tbl_debtods(id),
