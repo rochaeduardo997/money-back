@@ -66,12 +66,13 @@ func MockDebtod() (debtod *entity.Debtod) {
 }
 
 func Test_GivenDebtod_WhenInsertNewDebtod_ThenReceiveDebtodInstance(t *testing.T) {
-	db, err := sql.Open("postgres", "host=db port=5432 user=psql_user password=1234512345 dbname=db_test sslmode=disable")
+	db, err := sql.Open("postgres", "host=172.20.0.2 port=5432 user=psql_user password=1234512345 dbname=db_test sslmode=disable")
 	assert.Nil(t, err)
 
 	debtodRepository := repository.NewDebtodRepository(db)
 
 	given := MockDebtod()
-	_, err = debtodRepository.Save(given)
+	got, err := debtodRepository.Save(given)
 	assert.Nil(t, err)
+	assert.Equal(t, given, got)
 }
