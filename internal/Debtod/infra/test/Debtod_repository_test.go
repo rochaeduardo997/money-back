@@ -12,6 +12,22 @@ import (
 	repository "github.com/rochaeduardo997/money-back/internal/Debtod/infra"
 )
 
+func InstanceDB() (db *sql.DB) {
+	db, err := sql.Open("postgres", "host=172.20.0.2 port=5432 user=psql_user password=1234512345 dbname=db_test sslmode=disable")
+	if err != nil {
+		panic("Failed on startup database")
+	}
+	CleanupDB(db)
+	return
+}
+
+func CleanupDB(db *sql.DB) {
+	_, err := db.Exec("TRUNCATE TABLE tbl_debtods CASCADE")
+	if err != nil {
+		panic("Failed on cleanup database" + err.Error())
+	}
+}
+
 func MockAddress() (address *entity.Address) {
 	address = &entity.Address{
 		Street:       "street",
@@ -66,13 +82,31 @@ func MockDebtod() (debtod *entity.Debtod) {
 }
 
 func Test_GivenDebtod_WhenInsertNewDebtod_ThenReceiveDebtodInstance(t *testing.T) {
-	db, err := sql.Open("postgres", "host=172.20.0.2 port=5432 user=psql_user password=1234512345 dbname=db_test sslmode=disable")
-	assert.Nil(t, err)
+	db := InstanceDB()
 
 	debtodRepository := repository.NewDebtodRepository(db)
+	defer debtodRepository.CloseDB()
 
 	given := MockDebtod()
 	got, err := debtodRepository.Save(given)
 	assert.Nil(t, err)
 	assert.Equal(t, given, got)
+}
+
+func Test_GivenDebtods_WhenListDebtods_ThenReceiveDebtodInstances(t *testing.T) {
+	db := InstanceDB()
+
+	debtodRepository := repository.NewDebtodRepository(db)
+	defer debtodRepository.CloseDB()
+
+	given1 := MockDebtod()
+	given2 := MockDebtod()
+
+	_, _ = debtodRepository.Save(given1)
+	_, _ = debtodRepository.Save(given2)
+
+	got, err := debtodRepository.GetAll()
+	assert.Nil(t, err)
+	assert.Equal(t, given1, got[0])
+	assert.Equal(t, given2, got[1])
 }

@@ -33,7 +33,7 @@ services:
       - type: bind
         source: ../../
         target: /app
-    command: bash -c "cd /app/ && go mod tidy && go test --cover -v ./..."
+    command: bash -c "cd /app/ && go mod tidy && go test -cover -v ./..."
     networks:
       - backend
 

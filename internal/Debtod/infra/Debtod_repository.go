@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,8 +26,6 @@ func (dr *DebtodRepositoryDB) Save(d *entity.Debtod) (*entity.Debtod, error) {
 	}
 
 	d.Id = uuid.NewString()
-
-	defer dr.db.Close()
 
 	tx, err := dr.db.Begin()
 	if err != nil {
@@ -63,6 +62,44 @@ func (dr *DebtodRepositoryDB) Save(d *entity.Debtod) (*entity.Debtod, error) {
 	tx.Commit()
 
 	return &debtod, nil
+}
+
+func (dr *DebtodRepositoryDB) GetAll() ([]*entity.Debtod, error) {
+	var result []*entity.Debtod
+
+	debtodSQL := "SELECT * FROM tbl_debtods"
+	debtodRows, err := dr.db.Query(debtodSQL)
+	if err != nil {
+		return nil, err
+	}
+
+	for debtodRows.Next() {
+		var debtod entity.Debtod
+
+		err = ScanDebtod(debtodRows, &debtod)
+		if err != nil {
+			return nil, err
+		}
+		err = ScanDebtodContacts(dr.db, &debtod)
+		if err != nil {
+			return nil, err
+		}
+		err = ScanDebtodAddresses(dr.db, &debtod)
+		if err != nil {
+			return nil, err
+		}
+		err = ScanDebtodInvoices(dr.db, &debtod)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, &debtod)
+	}
+	return result, nil
+}
+
+func (dr *DebtodRepositoryDB) CloseDB() {
+	dr.db.Close()
 }
 
 func InsertDebtod(tx *sql.Tx, d *entity.Debtod, debtod *entity.Debtod) (err error) {
@@ -166,6 +203,149 @@ func InsertInvoices(tx *sql.Tx, d *entity.Debtod, debtod *entity.Debtod) (err er
 		invoice.DontNotifyUntil = invoice.DontNotifyUntil.UTC()
 		debtod.Invoices = append(debtod.Invoices, invoice)
 	}
+
+	return
+}
+
+func ScanDebtod(debtodRows *sql.Rows, debtod *entity.Debtod) (err error) {
+	var personType string
+
+	err = debtodRows.Scan(&debtod.Id, &debtod.Name, &debtod.Surname, &debtod.BussinessName, &debtod.Observation, &debtod.CPF_CNPJ, &personType)
+	if err != nil {
+		return
+	}
+
+	switch strings.ToUpper(personType) {
+	case "PF":
+		debtod.PersonType = 1
+	case "PJ":
+		debtod.PersonType = 2
+	case "FOREIGN":
+		debtod.PersonType = 3
+	}
+
+	return
+}
+
+func ScanDebtodContacts(db *sql.DB, debtod *entity.Debtod) (err error) {
+	var contact entity.Contact
+	err = ScanNumbers(db, debtod, &contact)
+	if err != nil {
+		return
+	}
+	err = ScanEmails(db, debtod, &contact)
+	if err != nil {
+		return
+	}
+	debtod.Contacts = contact
+	return
+}
+
+func ScanNumbers(db *sql.DB, debtod *entity.Debtod, contact *entity.Contact) (err error) {
+	sqlDebtodNumbers := `
+		SELECT number
+		FROM tbl_debtods_contact_numbers
+		WHERE fk_debtod_id = $1
+		ORDER BY number DESC
+	`
+	numberRows, err := db.Query(sqlDebtodNumbers, &debtod.Id)
+	if err != nil {
+		return
+	}
+
+	for numberRows.Next() {
+		var number string
+		err = numberRows.Scan(&number)
+		if err != nil {
+			return
+		}
+		numberParsed, _ := strconv.Atoi(number)
+		contact.Numbers = append(contact.Numbers, numberParsed)
+	}
+
+	return
+}
+
+func ScanEmails(db *sql.DB, debtod *entity.Debtod, contact *entity.Contact) (err error) {
+	sqlDebtodEmails := `
+		SELECT email
+		FROM tbl_debtods_contact_emails
+		WHERE fk_debtod_id = $1
+		ORDER BY email ASC
+	`
+	emailRows, err := db.Query(sqlDebtodEmails, &debtod.Id)
+	if err != nil {
+		return
+	}
+
+	for emailRows.Next() {
+		var email string
+		err = emailRows.Scan(&email)
+		if err != nil {
+			return
+		}
+		contact.Emails = append(contact.Emails, email)
+	}
+
+	return
+}
+
+func ScanDebtodAddresses(db *sql.DB, debtod *entity.Debtod) (err error) {
+	sqlDebtodAddresses := `
+		SELECT street, number, zipcode, neighborhood, observation, description
+		FROM tbl_debtods_addresses
+		WHERE fk_debtod_id = $1
+	`
+
+	addressRows, err := db.Query(sqlDebtodAddresses, &debtod.Id)
+	if err != nil {
+		return
+	}
+
+	var addresses []entity.Address
+	for addressRows.Next() {
+		var a entity.Address
+		err = addressRows.Scan(&a.Street, &a.Number, &a.Zipcode, &a.Neighborhood, &a.Observation, &a.Description)
+		if err != nil {
+			return
+		}
+		addresses = append(addresses, a)
+	}
+
+	debtod.Addresses = addresses
+
+	return
+}
+
+func ScanDebtodInvoices(db *sql.DB, debtod *entity.Debtod) (err error) {
+	sqlDebtodInvoices := `
+		SELECT 
+			id,
+			invoice_identification,
+			invoice_status,
+			delay_notified,
+			dont_notify_until,
+			observation,
+			description,
+			expired_date          
+		FROM tbl_debtods_invoices
+		WHERE fk_debtod_id = $1
+	`
+	invoiceRows, err := db.Query(sqlDebtodInvoices, debtod.Id)
+	if err != nil {
+		return
+	}
+
+	var invoices []entity.Invoice
+	for invoiceRows.Next() {
+		var i entity.Invoice
+		invoiceRows.Scan(&i.Id, &i.Identification, &i.Status, &i.DelayNotified, &i.DontNotifyUntil, &i.Observation, &i.Description, &i.ExpiredDate)
+		i.ExpiredDate = i.ExpiredDate.UTC()
+		i.DontNotifyUntil = i.DontNotifyUntil.UTC()
+		invoices = append(invoices, i)
+	}
+
+	debtod.Invoices = invoices
 
 	return
 }
