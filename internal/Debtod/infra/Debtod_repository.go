@@ -76,7 +76,7 @@ func (dr *DebtodRepositoryDB) GetAll() ([]*entity.Debtod, error) {
 	for debtodRows.Next() {
 		var debtod entity.Debtod
 
-		err = ScanDebtod(debtodRows, &debtod)
+		err = ScanDebtods(debtodRows, &debtod)
 		if err != nil {
 			return nil, err
 		}
@@ -96,6 +96,37 @@ func (dr *DebtodRepositoryDB) GetAll() ([]*entity.Debtod, error) {
 		result = append(result, &debtod)
 	}
 	return result, nil
+}
+
+func (dr *DebtodRepositoryDB) GetBy(id string) (*entity.Debtod, error) {
+	debtodSQL := "SELECT * FROM tbl_debtods WHERE id = $1"
+	debtodRow := dr.db.QueryRow(debtodSQL, &id)
+
+	var d entity.Debtod
+	var personType string
+	err := debtodRow.Scan(&d.Id, &d.Name, &d.Surname, &d.BussinessName, &d.Observation, &d.CPF_CNPJ, &personType)
+	if err != nil {
+		return nil, err
+	}
+
+	DeterminePersonType(&d, &personType)
+
+	err = ScanDebtodAddresses(dr.db, &d)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ScanDebtodContacts(dr.db, &d)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ScanDebtodInvoices(dr.db, &d)
+	if err != nil {
+		return nil, err
+	}
+
+	return &d, nil
 }
 
 func (dr *DebtodRepositoryDB) CloseDB() {
@@ -207,7 +238,7 @@ func InsertInvoices(tx *sql.Tx, d *entity.Debtod, debtod *entity.Debtod) (err er
 	return
 }
 
-func ScanDebtod(debtodRows *sql.Rows, debtod *entity.Debtod) (err error) {
+func ScanDebtods(debtodRows *sql.Rows, debtod *entity.Debtod) (err error) {
 	var personType string
 
 	err = debtodRows.Scan(&debtod.Id, &debtod.Name, &debtod.Surname, &debtod.BussinessName, &debtod.Observation, &debtod.CPF_CNPJ, &personType)
@@ -215,7 +246,13 @@ func ScanDebtod(debtodRows *sql.Rows, debtod *entity.Debtod) (err error) {
 		return
 	}
 
-	switch strings.ToUpper(personType) {
+	DeterminePersonType(debtod, &personType)
+
+	return
+}
+
+func DeterminePersonType(debtod *entity.Debtod, personType *string) {
+	switch strings.ToUpper(*personType) {
 	case "PF":
 		debtod.PersonType = 1
 	case "PJ":
@@ -223,8 +260,6 @@ func ScanDebtod(debtodRows *sql.Rows, debtod *entity.Debtod) (err error) {
 	case "FOREIGN":
 		debtod.PersonType = 3
 	}
-
-	return
 }
 
 func ScanDebtodContacts(db *sql.DB, debtod *entity.Debtod) (err error) {

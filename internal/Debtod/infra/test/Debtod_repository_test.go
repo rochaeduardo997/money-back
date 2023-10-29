@@ -110,3 +110,20 @@ func Test_GivenDebtods_WhenListDebtods_ThenReceiveDebtodInstances(t *testing.T) 
 	assert.Equal(t, given1, got[0])
 	assert.Equal(t, given2, got[1])
 }
+
+func Test_GivenDebtods_WhenListDebtodById_ThenReceiveDebtodInstance(t *testing.T) {
+	db := InstanceDB()
+
+	debtodRepository := repository.NewDebtodRepository(db)
+	defer debtodRepository.CloseDB()
+
+	given1 := MockDebtod()
+	given2 := MockDebtod()
+
+	_, _ = debtodRepository.Save(given1)
+	_, _ = debtodRepository.Save(given2)
+
+	got, err := debtodRepository.GetBy(given1.Id)
+	assert.Nil(t, err)
+	assert.Equal(t, given1, got)
+}
