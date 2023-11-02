@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS tbl_debtods(
   observation    TEXT,
   cpf_cnpj       VARCHAR(14) NOT NULL,
   person_type    person_type NOT NULL DEFAULT 'pf'::person_type,
+  is_active      BOOLEAN DEFAULT true,
   PRIMARY KEY(id)
 );
 

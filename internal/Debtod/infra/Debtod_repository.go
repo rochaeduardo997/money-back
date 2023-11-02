@@ -92,6 +92,10 @@ func (dr *DebtodRepositoryDB) GetAll() ([]*entity.Debtod, error) {
 		if err != nil {
 			return nil, err
 		}
+		err = debtod.Validate()
+		if err != nil {
+			return nil, err
+		}
 
 		result = append(result, &debtod)
 	}
@@ -104,29 +108,42 @@ func (dr *DebtodRepositoryDB) GetBy(id string) (*entity.Debtod, error) {
 
 	var d entity.Debtod
 	var personType string
-	err := debtodRow.Scan(&d.Id, &d.Name, &d.Surname, &d.BussinessName, &d.Observation, &d.CPF_CNPJ, &personType)
+	err := debtodRow.Scan(&d.Id, &d.Name, &d.Surname, &d.BussinessName, &d.Observation, &d.CPF_CNPJ, &personType, &d.IsActive)
 	if err != nil {
 		return nil, err
 	}
-
 	DeterminePersonType(&d, &personType)
 
 	err = ScanDebtodAddresses(dr.db, &d)
 	if err != nil {
 		return nil, err
 	}
-
 	err = ScanDebtodContacts(dr.db, &d)
 	if err != nil {
 		return nil, err
 	}
-
 	err = ScanDebtodInvoices(dr.db, &d)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Validate()
 	if err != nil {
 		return nil, err
 	}
 
 	return &d, nil
+}
+
+func (dr *DebtodRepositoryDB) DeleteParanoidBy(id string) (result bool, err error) {
+	deleteSQL := "UPDATE tbl_debtods SET is_active=false WHERE id = $1"
+	res, err := dr.db.Exec(deleteSQL, &id)
+	if err != nil {
+		return
+	}
+
+	rows, err := res.RowsAffected()
+	result = rows > 0
+	return
 }
 
 func (dr *DebtodRepositoryDB) CloseDB() {
@@ -135,12 +152,12 @@ func (dr *DebtodRepositoryDB) CloseDB() {
 
 func InsertDebtod(tx *sql.Tx, d *entity.Debtod, debtod *entity.Debtod) (err error) {
 	debtodSQL := `
-		INSERT INTO tbl_debtods(id, name, surname, bussiness_name, observation, cpf_cnpj, person_type)
-		VALUES($1,$2,$3,$4,$5,$6,$7)
+		INSERT INTO tbl_debtods(id, name, surname, bussiness_name, observation, cpf_cnpj, person_type, is_active)
+		VALUES($1,$2,$3,$4,$5,$6,$7,$8)
 		RETURNING *
 	`
 	var personType string
-	err = tx.QueryRow(debtodSQL, &d.Id, &d.Name, &d.Surname, &d.BussinessName, &d.Observation, &d.CPF_CNPJ, GetPersonTypeString(&d.PersonType)).Scan(&debtod.Id, &debtod.Name, &debtod.Surname, &debtod.BussinessName, &debtod.Observation, &debtod.CPF_CNPJ, &personType)
+	err = tx.QueryRow(debtodSQL, &d.Id, &d.Name, &d.Surname, &d.BussinessName, &d.Observation, &d.CPF_CNPJ, GetPersonTypeString(&d.PersonType), &d.IsActive).Scan(&debtod.Id, &debtod.Name, &debtod.Surname, &debtod.BussinessName, &debtod.Observation, &debtod.CPF_CNPJ, &personType, &debtod.IsActive)
 	switch strings.ToUpper(personType) {
 	case "PF":
 		debtod.PersonType = 1
@@ -241,7 +258,7 @@ func InsertInvoices(tx *sql.Tx, d *entity.Debtod, debtod *entity.Debtod) (err er
 func ScanDebtods(debtodRows *sql.Rows, debtod *entity.Debtod) (err error) {
 	var personType string
 
-	err = debtodRows.Scan(&debtod.Id, &debtod.Name, &debtod.Surname, &debtod.BussinessName, &debtod.Observation, &debtod.CPF_CNPJ, &personType)
+	err = debtodRows.Scan(&debtod.Id, &debtod.Name, &debtod.Surname, &debtod.BussinessName, &debtod.Observation, &debtod.CPF_CNPJ, &personType, &debtod.IsActive)
 	if err != nil {
 		return
 	}

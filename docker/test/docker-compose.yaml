@@ -1,6 +1,5 @@
 services:
   db:
-    #image: postgres:latest
     image: postgres:latest
     container_name: db
     volumes:

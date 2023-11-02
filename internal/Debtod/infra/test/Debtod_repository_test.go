@@ -77,6 +77,7 @@ func MockDebtod() (debtod *entity.Debtod) {
 		Contacts:      *contacts,
 		Addresses:     []entity.Address{*address},
 		Invoices:      []entity.Invoice{*invoice},
+		IsActive:      true,
 	}
 	return
 }
@@ -126,4 +127,19 @@ func Test_GivenDebtods_WhenListDebtodById_ThenReceiveDebtodInstance(t *testing.T
 	got, err := debtodRepository.GetBy(given1.Id)
 	assert.Nil(t, err)
 	assert.Equal(t, given1, got)
+}
+
+func Test_GivenDebtod_WhenDeleteDebtodById_ThenReceiveTrue(t *testing.T) {
+	db := InstanceDB()
+
+	debtodRepository := repository.NewDebtodRepository(db)
+	defer debtodRepository.CloseDB()
+
+	given := MockDebtod()
+
+	_, _ = debtodRepository.Save(given)
+
+	got, err := debtodRepository.DeleteParanoidBy(given.Id)
+	assert.Nil(t, err)
+	assert.Equal(t, true, got)
 }
