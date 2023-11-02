@@ -22,6 +22,7 @@ func Test_GivenDebtod_WhenCreateNewDebtod_ThenReceiveNormalDebtodInstance(t *tes
 		Contacts:      *contacts,
 		Addresses:     []entity.Address{*address},
 		Invoices:      []entity.Invoice{*invoice},
+		IsActive:      true,
 	}
 	got, err := entity.NewDebtod(debtod)
 	assert.Nil(t, err)
@@ -40,6 +41,7 @@ func Test_GivenDebtodWithoutAddress_WhenCreateNewDebtod_ThenReceiveNormalDebtodI
 		PersonType:    1,
 		Contacts:      *contacts,
 		Invoices:      []entity.Invoice{*invoice},
+		IsActive:      true,
 	}
 	got, err := entity.NewDebtod(debtod)
 	assert.Nil(t, err)

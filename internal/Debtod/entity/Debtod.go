@@ -28,6 +28,7 @@ type Debtod struct {
 	Contacts      Contact
 	Addresses     []Address
 	Invoices      []Invoice
+	IsActive      bool
 }
 
 func NewDebtod(debtod *Debtod) (newDebtod *Debtod, err error) {
@@ -46,6 +47,7 @@ func NewDebtod(debtod *Debtod) (newDebtod *Debtod, err error) {
 		Contacts:      debtod.Contacts,
 		Addresses:     debtod.Addresses,
 		Invoices:      debtod.Invoices,
+		IsActive:      debtod.IsActive,
 	}
 
 	return newDebtod, err
